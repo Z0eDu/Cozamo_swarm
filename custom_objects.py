@@ -27,8 +27,10 @@ object you have and the exact size of the markers that you print out.
 import time
 
 import cozmo
-from cozmo.objects import CustomObject, CustomObjectMarkers, CustomObjectTypes
-
+from cozmo.objects import CustomObject, CustomObjectMarkers, CustomObjectTypes, ObservableElement, ObservableObject
+from cozmo.util import Pose
+import sys
+print(sys.path)
 
 def handle_object_appeared(evt, **kw):
     # This will be called whenever an EvtObjectAppeared is dispatched -
@@ -82,10 +84,17 @@ def custom_objects(robot: cozmo.robot.Robot):
 
 
     lookaround = robot.start_behavior(cozmo.behavior.BehaviorTypes.LookAroundInPlace)
-    custom_boxes = robot.world.wait_until_observe_num_objects(num=1, object_type=cozmo.objects.CustomObjectTypes.CustomType00, timeout=60)
+    
+    cubes = robot.world.wait_until_observe_num_objects(num=1, object_type=CustomObject, timeout=60)
     lookaround.stop()
-    if len(custom_boxes) > 0:
-    	robot.go_to_object(target_object = custom_boxes[0], distance_from_object = 100, num_retries = 5)
+    
+    if len(cubes) > 0:
+        print("Found object")
+        a = super(CustomObject, cubes[0]);
+        print(a)
+        print(type(a))
+        robot.go_to_object(cubes[0],distance_from_object=0.001,  num_retries=5)
+        print("Got to object")
         # robot.drive_wheels(25, 25)
         # time.sleep(1)
         # robot.set_lift_height(0.5, accel=10.0, max_speed=10.0, duration=0.0,  in_parallel=False, num_retries=1)
@@ -101,4 +110,4 @@ def custom_objects(robot: cozmo.robot.Robot):
         time.sleep(0.1)
 
 
-cozmo.run_program(custom_objects, use_viewer=True)
+cozmo.run_program(custom_objects)
