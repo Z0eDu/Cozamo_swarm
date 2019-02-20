@@ -93,7 +93,7 @@ def custom_objects(robot: cozmo.robot.Robot):
         a = super(CustomObject, cubes[0]);
         print(a)
         print(type(a))
-        robot.go_to_object(cubes[0],distance_from_object=0.001,  num_retries=5)
+        robot.go_to_pose(cubes[0].pose,relative_to_robot=False)
         print("Got to object")
         # robot.drive_wheels(25, 25)
         # time.sleep(1)
