@@ -81,19 +81,22 @@ def custom_objects(robot: cozmo.robot.Robot):
 
     print("Press CTRL-C to quit")
 
-
-
-    lookaround = robot.start_behavior(cozmo.behavior.BehaviorTypes.LookAroundInPlace)
+    robot.set_head_angle(cozmo.robot.MAX_HEAD_ANGLE).wait_for_completed()
+    lookaround = robot.start_behavior(cozmo.behavior.BehaviorTypes.LookAroundInPlace, in_parallel = True)
     
     cubes = robot.world.wait_until_observe_num_objects(num=1, object_type=CustomObject, timeout=60)
     lookaround.stop()
     
     if len(cubes) > 0:
         print("Found object")
+        robot.set_head_angle(cozmo.robot.MIN_HEAD_ANGLE).wait_for_completed()
+        print('hello world')
+        robot.set_lift_height(height = 0.5, accel = 6, max_speed = 500, duration = 1, in_parallel = False, num_retries = 3).wait_for_completed()
         a = super(CustomObject, cubes[0]);
         print(a)
         print(type(a))
-        robot.go_to_pose(cubes[0].pose,relative_to_robot=False)
+        go_to_pose_action = robot.go_to_pose(cubes[0].pose,relative_to_robot=False).wait_for_completed()
+        A = robot.set_lift_height(height = 1, accel = 1, max_speed = 3, duration = 3, in_parallel = False, num_retries = 3).wait_for_completed()
         print("Got to object")
         # robot.drive_wheels(25, 25)
         # time.sleep(1)
