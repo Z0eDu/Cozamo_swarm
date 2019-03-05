@@ -32,6 +32,34 @@ from cozmo.util import Pose
 import sys
 print(sys.path)
 
+
+
+def lookForCubes(robot, timeout, head_height):
+    robot.set_lift_height(height = 0, accel = 6, max_speed = 500, duration = 1, in_parallel = False, num_retries = 3).wait_for_completed()
+    start_time = time.time()
+    if head_height == 0:
+        robot.set_head_angle(cozmo.util.Angle(degrees = 0)).wait_for_completed()
+    elif head_height == 1:
+        robot.set_head_angle(cozmo.util.Angle(degrees = 22.25)).wait_for_completed()
+    elif head_height == 2:
+        robot.set_head_angle(cozmo.robot.MAX_HEAD_ANGLE).wait_for_completed()
+    while (time.time() - start_time < timeout):
+        action = robot.turn_in_place(cozmo.util.Angle(degrees = 30), in_parallel = False, num_retries = 0, speed = None, accel = None, angle_tolerance = None, is_absolute = False)
+        cubes = robot.world.wait_until_observe_num_objects(num=1, object_type=CustomObject, timeout=3)
+        if len(cubes) > 0:
+            action.wait_for_completed()
+            return cubes
+    return []
+        
+def pickupCube(robot, cube_location):
+    robot.set_lift_height(height = 0, accel = 6, max_speed = 500, duration = 1, in_parallel = False, num_retries = 3).wait_for_completed()
+    robot.go_to_pose(cube_location,relative_to_robot=False).wait_for_completed()
+    robot.set_lift_height(height = 1, accel = 6, max_speed = 500, duration = 1, in_parallel = False, num_retries = 3).wait_for_completed()
+    
+    
+    
+
+
 def handle_object_appeared(evt, **kw):
     # This will be called whenever an EvtObjectAppeared is dispatched -
     # whenever an Object comes into view.
@@ -81,23 +109,24 @@ def custom_objects(robot: cozmo.robot.Robot):
 
     print("Press CTRL-C to quit")
 
-    robot.set_head_angle(cozmo.robot.MAX_HEAD_ANGLE).wait_for_completed()
-    lookaround = robot.start_behavior(cozmo.behavior.BehaviorTypes.LookAroundInPlace, in_parallel = True)
-    
-    cubes = robot.world.wait_until_observe_num_objects(num=1, object_type=CustomObject, timeout=60)
-    lookaround.stop()
-    
-    if len(cubes) > 0:
-        print("Found object")
-        robot.set_head_angle(cozmo.robot.MIN_HEAD_ANGLE).wait_for_completed()
-        print('hello world')
-        robot.set_lift_height(height = 0.5, accel = 6, max_speed = 500, duration = 1, in_parallel = False, num_retries = 3).wait_for_completed()
-        a = super(CustomObject, cubes[0]);
-        print(a)
-        print(type(a))
-        go_to_pose_action = robot.go_to_pose(cubes[0].pose,relative_to_robot=False).wait_for_completed()
-        A = robot.set_lift_height(height = 1, accel = 1, max_speed = 3, duration = 3, in_parallel = False, num_retries = 3).wait_for_completed()
-        print("Got to object")
+
+    cubes = lookForCubes(robot, 45, 0)
+    old_pose = robot.pose
+    print("looking for cubes!") 
+    if len(cubes) == 1:
+        print("found object")
+        pickupCube(robot, cubes[0].pose)        
+        print("pickup up object")
+        robot.go_to_pose(old_pose,relative_to_robot=False).wait_for_completed()
+        robot.set_lift_height(height = 0, accel = 6, max_speed = 500, duration = 1, in_parallel = False, num_retries = 3).wait_for_completed()
+        #robot.set_head_angle(cozmo.robot.MIN_HEAD_ANGLE).wait_for_completed()
+       # print('hello world')
+       # robot.set_lift_height(height = 0.5, accel = 6, max_speed = 500, duration = 1, in_parallel = False, num_retries = 3).wait_for_completed()
+       # a = super(CustomObject, cubes[0]);
+
+      #  go_to_pose_action = robot.go_to_pose(cubes[0].pose,relative_to_robot=False).wait_for_completed()
+       # A = robot.set_lift_height(height = 1, accel = 1, max_speed = 3, duration = 3, in_parallel = False, num_retries = 3).wait_for_completed()
+       # print("Got to object")
         # robot.drive_wheels(25, 25)
         # time.sleep(1)
         # robot.set_lift_height(0.5, accel=10.0, max_speed=10.0, duration=0.0,  in_parallel=False, num_retries=1)
