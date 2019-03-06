@@ -44,18 +44,27 @@ def lookForCubes(robot, timeout, head_height):
     elif head_height == 2:
         robot.set_head_angle(cozmo.robot.MAX_HEAD_ANGLE).wait_for_completed()
     while (time.time() - start_time < timeout):
-        action = robot.turn_in_place(cozmo.util.Angle(degrees = 30), in_parallel = False, num_retries = 0, speed = None, accel = None, angle_tolerance = None, is_absolute = False)
+        action = robot.turn_in_place(cozmo.util.Angle(degrees = 20), in_parallel = False, num_retries = 0, speed =cozmo.util.radians(25),accel = None, angle_tolerance = None, is_absolute = False).wait_for_completed()
         cubes = robot.world.wait_until_observe_num_objects(num=1, object_type=CustomObject, timeout=3)
         if len(cubes) > 0:
-            action.wait_for_completed()
+            print('lencube:',len(cubes));
+            #action.wait_for_completed()
             return cubes
     return []
         
 def pickupCube(robot, cube_location):
     robot.set_lift_height(height = 0, accel = 6, max_speed = 500, duration = 1, in_parallel = False, num_retries = 3).wait_for_completed()
     robot.go_to_pose(cube_location,relative_to_robot=False).wait_for_completed()
+    robot.drive_wheels(-50,-50)
+    time.sleep(3)
+    robot.go_to_pose(cube_location,relative_to_robot=False).wait_for_completed()
+
+    robot.drive_wheels(0, 0)
     robot.set_lift_height(height = 1, accel = 6, max_speed = 500, duration = 1, in_parallel = False, num_retries = 3).wait_for_completed()
-    
+    robot.drive_wheels(-25, -25)
+    time.sleep(2)
+    robot.drive_wheels(0, 0)
+
     
     
 
@@ -73,6 +82,23 @@ def handle_object_disappeared(evt, **kw):
     if isinstance(evt.obj, CustomObject):
         print("Cozmo stopped seeing a %s" % str(evt.obj.object_type))
 
+def pickupObject(robot):
+    robot.drive_wheels(100,100)
+    time.sleep(2.5)
+    robot.drive_wheels(0,0)
+    robot.set_lift_height(height = 1, accel = 6, max_speed = 500, duration = 1, in_parallel = False, num_retries = 3).wait_for_completed()
+    robot.drive_wheels(-50,-50)
+    time.sleep(3)
+    robot.drive_wheels(0,0)
+    cubes = robot.world.wait_until_observe_num_objects(num=1, object_type=CustomObject, timeout=3)
+    if len(cubes) == 0:
+        return
+    else:
+        robot.set_lift_height(height = 0, accel = 6, max_speed = 500, duration = 1, in_parallel = False, num_retries = 3).wait_for_completed()
+        robot.go_to_pose(cubes[0].pose,relative_to_robot=False).wait_for_completed()
+        pickupObject(robot)
+
+        
 
 def custom_objects(robot: cozmo.robot.Robot):
     # Add event handlers for whenever Cozmo sees a new object
@@ -115,25 +141,14 @@ def custom_objects(robot: cozmo.robot.Robot):
     print("looking for cubes!") 
     if len(cubes) == 1:
         print("found object")
-        pickupCube(robot, cubes[0].pose)        
-        print("pickup up object")
+        robot.set_lift_height(height = 0, accel = 6, max_speed = 500, duration = 1, in_parallel = False, num_retries = 3).wait_for_completed()
+        robot.go_to_pose(cubes[0].pose,relative_to_robot=False).wait_for_completed()
+        pickupObject(robot)
+        robot.drive_wheels(-50,-50)
+        time.sleep(3)
+        robot.drive_wheels(0,0)
         robot.go_to_pose(old_pose,relative_to_robot=False).wait_for_completed()
         robot.set_lift_height(height = 0, accel = 6, max_speed = 500, duration = 1, in_parallel = False, num_retries = 3).wait_for_completed()
-        #robot.set_head_angle(cozmo.robot.MIN_HEAD_ANGLE).wait_for_completed()
-       # print('hello world')
-       # robot.set_lift_height(height = 0.5, accel = 6, max_speed = 500, duration = 1, in_parallel = False, num_retries = 3).wait_for_completed()
-       # a = super(CustomObject, cubes[0]);
-
-      #  go_to_pose_action = robot.go_to_pose(cubes[0].pose,relative_to_robot=False).wait_for_completed()
-       # A = robot.set_lift_height(height = 1, accel = 1, max_speed = 3, duration = 3, in_parallel = False, num_retries = 3).wait_for_completed()
-       # print("Got to object")
-        # robot.drive_wheels(25, 25)
-        # time.sleep(1)
-        # robot.set_lift_height(0.5, accel=10.0, max_speed=10.0, duration=0.0,  in_parallel=False, num_retries=1)
-        # robot.drive_wheels(25, 25)
-        # time.sleep(1)
-        # robot.set_lift_height(1, accel=10.0, max_speed=10.0, duration=0.0,  in_parallel=False, num_retries=1)
-        # robot.drive_wheels(-25, -25)
     else:
         print("Cannot locate custom box")
 
